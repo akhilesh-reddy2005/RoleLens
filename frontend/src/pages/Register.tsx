@@ -24,7 +24,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export default function Register() {
-  const { register: registerUser } = useAuth();
+  const { register: registerUser, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -41,6 +41,14 @@ export default function Register() {
       navigate("/dashboard");
     } catch (error) {
       toast.error(extractErrorMessage(error));
+    }
+  }
+
+  async function handleGoogleSignUp() {
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      toast.error("Failed to start Google sign-up. Please try again.");
     }
   }
 
@@ -85,6 +93,26 @@ export default function Register() {
           Create account
         </Button>
       </form>
+
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-glass-border" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-[#0f172a] px-2 text-text-secondary">Or continue with</span>
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        onClick={handleGoogleSignUp}
+        className="h-11 w-full border border-glass-border bg-glass-bg text-text-primary hover:bg-glass-border/20 transition-all duration-200"
+      >
+        <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+          <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+        </svg>
+        Sign up with Google
+      </Button>
 
       <p className="mt-6 text-center text-sm text-text-secondary">
         Already have an account?{" "}

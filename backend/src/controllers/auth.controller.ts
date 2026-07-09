@@ -1,11 +1,12 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { supabaseAdmin } from "../config/supabase";
 import { env } from "../config/env";
 import { asyncHandler } from "../utils/asyncHandler";
 import { ApiError } from "../utils/apiError";
-import { loginSchema, registerSchema } from "../utils/validation";
+import { loginSchema, registerSchema, googleAuthSchema } from "../utils/validation";
 
 function signToken(userId: string, email: string) {
   return jwt.sign({ id: userId, email }, env.jwtSecret, { expiresIn: env.jwtExpiresIn as any });
@@ -84,4 +85,58 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   }
 
   res.json({ success: true, data: profile });
+});
+
+export const googleAuth = asyncHandler(async (req: Request, res: Response) => {
+  const input = googleAuthSchema.parse(req.body);
+
+  const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(input.token);
+
+  if (authError || !user || !user.email) {
+    throw ApiError.unauthorized("Invalid Supabase token or session");
+  }
+
+  let { data: profile } = await supabaseAdmin
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("email", user.email)
+    .maybeSingle();
+
+  if (!profile) {
+    const secureRandomPassword = crypto.randomBytes(32).toString("hex");
+    const passwordHash = await bcrypt.hash(secureRandomPassword, 12);
+    const fullName = user.user_metadata?.full_name || user.email.split("@")[0];
+
+    const { data: newProfile, error: insertError } = await supabaseAdmin
+      .from("profiles")
+      .insert({
+        id: user.id,
+        full_name: fullName,
+        email: user.email,
+        password_hash: passwordHash,
+      })
+      .select("id, full_name, email")
+      .single();
+
+    if (insertError || !newProfile) {
+      console.error("Failed to create profile on Google Sign-in:", insertError);
+      throw ApiError.internal("Failed to create user profile");
+    }
+
+    profile = newProfile;
+  }
+
+  const token = signToken(profile.id, profile.email);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      token,
+      user: {
+        id: profile.id,
+        fullName: profile.full_name,
+        email: profile.email,
+      },
+    },
+  });
 });

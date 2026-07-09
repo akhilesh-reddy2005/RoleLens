@@ -6,8 +6,8 @@ export default {
     extend: {
       colors: {
         // Tier 1 — literal brand tokens (spec hexes/rgba), used directly in bespoke components.
-        bg: "#030712",
-        "surface-card": "#0F172A",
+        bg: "var(--bg-color)",
+        "surface-card": "var(--surface-card)",
         brand: {
           primary: "#6366F1",
           secondary: "#8B5CF6",
@@ -16,10 +16,10 @@ export default {
         success: "#10B981",
         warning: "#F59E0B",
         danger: "#EF4444",
-        "text-primary": "rgba(255,255,255,0.90)",
-        "text-secondary": "rgba(255,255,255,0.65)",
-        "glass-border": "rgba(255,255,255,0.08)",
-        "glass-bg": "rgba(255,255,255,0.04)",
+        "text-primary": "var(--text-primary)",
+        "text-secondary": "var(--text-secondary)",
+        "glass-border": "var(--glass-border)",
+        "glass-bg": "var(--glass-bg)",
         // Tier 2 — shadcn's semantic HSL-var tokens, set to the same hexes in index.css.
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -89,8 +89,7 @@ export default {
       backgroundImage: {
         "grid-glow":
           "radial-gradient(circle at 20% 0%, rgba(99,102,241,0.10), transparent 50%), radial-gradient(circle at 80% 10%, rgba(6,182,212,0.08), transparent 45%)",
-        "mesh-bg":
-          "radial-gradient(ellipse 80% 50% at 20% -10%, rgba(99,102,241,0.35), transparent 60%), radial-gradient(ellipse 60% 50% at 85% 10%, rgba(139,92,246,0.28), transparent 60%), radial-gradient(ellipse 60% 40% at 50% 100%, rgba(6,182,212,0.20), transparent 60%)",
+        "mesh-bg": "var(--mesh-bg-image)",
       },
       borderRadius: {
         lg: "var(--radius)",

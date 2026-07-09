@@ -20,3 +20,8 @@ export async function getProfileRequest() {
   const { data } = await api.get<{ success: boolean; data: User }>("/auth/profile");
   return data.data;
 }
+
+export async function googleLoginRequest(token: string) {
+  const { data } = await api.post<AuthResponse>("/auth/google", { token });
+  return data.data;
+}

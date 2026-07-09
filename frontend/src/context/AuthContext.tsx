@@ -1,12 +1,15 @@
 import { createContext, ReactNode, useEffect, useState } from "react";
 import { User } from "../types";
-import { loginRequest, registerRequest } from "../services/auth.service";
+import { loginRequest, registerRequest, googleLoginRequest } from "../services/auth.service";
+import { supabase } from "../lib/supabase";
 
 interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string) => Promise<void>;
+  loginWithGoogleToken: (token: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   logout: () => void;
 }
 
@@ -40,6 +43,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     persistSession(token, newUser);
   }
 
+  async function loginWithGoogleToken(token: string) {
+    const { token: customToken, user: nextUser } = await googleLoginRequest(token);
+    persistSession(customToken, nextUser);
+  }
+
+  async function signInWithGoogle() {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) throw error;
+  }
+
   function logout() {
     localStorage.removeItem("rolelens_token");
     localStorage.removeItem("rolelens_user");
@@ -47,7 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        login,
+        register,
+        loginWithGoogleToken,
+        signInWithGoogle,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

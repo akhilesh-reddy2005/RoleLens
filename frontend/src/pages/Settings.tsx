@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Loader2, Moon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Loader2, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 import { GlassCard } from "@/components/cards/GlassCard";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,25 @@ export default function Settings() {
   const { user } = useAuth();
   const [fullName, setFullName] = useState(user?.fullName ?? "");
   const [isSaving, setIsSaving] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const isLight = document.documentElement.classList.contains("light");
+    setTheme(isLight ? "light" : "dark");
+  }, []);
+
+  const toggleTheme = (newTheme: "dark" | "light") => {
+    setTheme(newTheme);
+    if (newTheme === "light") {
+      document.documentElement.classList.add("light");
+      localStorage.setItem("rolelens_theme", "light");
+      toast.success("Switched to Light theme");
+    } else {
+      document.documentElement.classList.remove("light");
+      localStorage.setItem("rolelens_theme", "dark");
+      toast.success("Switched to Dark theme");
+    }
+  };
 
   async function handleSave() {
     setIsSaving(true);
@@ -55,15 +74,50 @@ export default function Settings() {
 
         <TabsContent value="preferences" className="mt-5">
           <GlassCard hover={false}>
-            <h2 className="font-semibold text-text-primary">Preferences</h2>
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-text-primary">Theme mode</div>
-                <div className="text-xs text-text-secondary">RoleLens is designed as a dark-first interface.</div>
+            <h2 className="font-semibold text-text-primary mb-1">Preferences</h2>
+            <p className="text-xs text-text-secondary mb-6">Customize your display and application appearance.</p>
+            
+            <div className="space-y-6">
+              <div className="flex flex-col gap-3">
+                <label className="text-sm font-medium text-text-primary">Theme Mode</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => toggleTheme("dark")}
+                    className={`flex flex-col items-center gap-3 rounded-2xl border p-4 transition-all duration-200 ${
+                      theme === "dark"
+                        ? "border-brand-primary bg-brand-primary/10 shadow-glow-primary text-white"
+                        : "border-glass-border bg-glass-bg text-text-secondary hover:bg-glass-border/20 hover:text-text-primary"
+                    }`}
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#030712] border border-glass-border">
+                      <Moon className="h-6 w-6 text-brand-primary" />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold">Dark Mode</div>
+                      <div className="text-[10px] opacity-70 mt-0.5">Easy on the eyes in low light</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleTheme("light")}
+                    className={`flex flex-col items-center gap-3 rounded-2xl border p-4 transition-all duration-200 ${
+                      theme === "light"
+                        ? "border-brand-primary bg-brand-primary/10 shadow-glow-primary text-brand-primary"
+                        : "border-glass-border bg-glass-bg text-text-secondary hover:bg-glass-border/20 hover:text-text-primary"
+                    }`}
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white border border-gray-200">
+                      <Sun className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold">Light Mode</div>
+                      <div className="text-[10px] opacity-70 mt-0.5">Clean, bright workspace look</div>
+                    </div>
+                  </button>
+                </div>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-primary/10 px-2.5 py-1 text-xs font-semibold text-brand-primary">
-                <Moon className="h-3 w-3" /> Dark mode
-              </span>
             </div>
           </GlassCard>
         </TabsContent>
