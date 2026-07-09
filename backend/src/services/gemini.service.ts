@@ -32,9 +32,10 @@ export async function analyzeResumeWithGemini(resumeText: string): Promise<Gemin
   try {
     const result = await geminiModel.generateContent(prompt);
     rawResponseText = result.response.text();
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini API request failed:", error);
-    throw ApiError.internal("The AI analysis service is temporarily unavailable");
+    const details = error?.message ? `: ${error.message}` : "";
+    throw ApiError.internal(`The AI analysis service is temporarily unavailable${details}`);
   }
 
   const cleaned = stripCodeFences(rawResponseText);

@@ -30,7 +30,8 @@ export async function storeAndParseResume(
 
   if (uploadError) {
     console.error("Supabase storage upload failed:", uploadError);
-    throw ApiError.internal("Failed to store the resume file");
+    const details = (uploadError as any)?.message ? `: ${(uploadError as any).message}` : "";
+    throw ApiError.internal(`Failed to store the resume file${details}`);
   }
 
   const { data: resumeRow, error: insertError } = await supabaseAdmin
