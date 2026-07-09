@@ -5,7 +5,7 @@ import { Card } from "../components/ui/Card";
 import { ProgressBar } from "../components/ui/ProgressBar";
 import { Loader } from "../components/ui/Loader";
 import { Button } from "../components/ui/Button";
-import { getAnalysisDetailRequest } from "../services/resume.service";
+import { getAnalysisDetailRequest, getHistoryRequest } from "../services/resume.service";
 import { AnalysisResult as AnalysisResultType } from "../types";
 
 const CONFIDENCE_TONE: Record<string, "success" | "warning" | "primary"> = {
@@ -21,29 +21,51 @@ export default function AnalysisResultPage() {
   const stateResult = (location.state as { result?: AnalysisResultType } | null)?.result;
 
   const [result, setResult] = useState<AnalysisResultType | null>(stateResult ?? null);
-  const [isLoading, setIsLoading] = useState(!stateResult && !!analysisId);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (stateResult || !analysisId) return;
-    getAnalysisDetailRequest(analysisId)
-      .then((data) => {
-        setResult({
-          analysisId: data.id,
-          resumeScore: data.resume_score,
-          atsScore: data.ats_score,
-          recommendedRoles: (data.recommended_roles ?? []).map((r: any) => ({
-            role: r.role,
-            match: r.match_percentage,
-            confidence: r.confidence,
-            reason: r.reason,
-          })),
-          skills: { current: data.current_skills ?? [], missing: data.missing_skills ?? [] },
-          strengths: data.strengths ?? [],
-          weaknesses: data.weaknesses ?? [],
-          careerRoadmap: data.career_roadmap ?? [],
-        });
-      })
-      .finally(() => setIsLoading(false));
+    if (stateResult) {
+      setIsLoading(false);
+      return;
+    }
+
+    async function loadAnalysis() {
+      try {
+        let targetId = analysisId;
+        if (!targetId) {
+          const history = await getHistoryRequest();
+          const latest = history?.[0];
+          if (latest) {
+            targetId = latest.id;
+          }
+        }
+
+        if (targetId) {
+          const data = await getAnalysisDetailRequest(targetId);
+          setResult({
+            analysisId: data.id,
+            resumeScore: data.resume_score,
+            atsScore: data.ats_score,
+            recommendedRoles: (data.recommended_roles ?? []).map((r: any) => ({
+              role: r.role,
+              match: r.match_percentage,
+              confidence: r.confidence,
+              reason: r.reason,
+            })),
+            skills: { current: data.current_skills ?? [], missing: data.missing_skills ?? [] },
+            strengths: data.strengths ?? [],
+            weaknesses: data.weaknesses ?? [],
+            careerRoadmap: data.career_roadmap ?? [],
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load analysis details:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadAnalysis();
   }, [analysisId, stateResult]);
 
   if (isLoading) return <Loader label="Loading your analysis" />;

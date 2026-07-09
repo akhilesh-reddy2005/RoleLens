@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { CheckCircle2, CircleDashed } from "lucide-react";
 import { Card } from "../components/ui/Card";
 import { Loader } from "../components/ui/Loader";
-import { getHistoryRequest } from "../services/resume.service";
+import { getHistoryRequest, getAnalysisDetailRequest } from "../services/resume.service";
 import { AnalysisResult } from "../types";
 
 export default function SkillGap() {
@@ -15,12 +15,18 @@ export default function SkillGap() {
 
   useEffect(() => {
     if (stateResult) return;
+    setIsLoading(true);
     getHistoryRequest()
-      .then((history) => {
+      .then(async (history) => {
         const latest = history?.[0];
         if (latest) {
-          // History rows don't carry full skill arrays; the detail endpoint does.
-          // For a quick preview we fall back to an empty state and point users to a full analysis.
+          try {
+            const data = await getAnalysisDetailRequest(latest.id);
+            setCurrent(data.current_skills ?? []);
+            setMissing(data.missing_skills ?? []);
+          } catch (err) {
+            console.error("Failed to load latest analysis details:", err);
+          }
         }
       })
       .finally(() => setIsLoading(false));

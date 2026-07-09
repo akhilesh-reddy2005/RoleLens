@@ -1,11 +1,35 @@
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Card } from "../components/ui/Card";
+import { Loader } from "../components/ui/Loader";
+import { getHistoryRequest, getAnalysisDetailRequest } from "../services/resume.service";
 import { AnalysisResult } from "../types";
 
 export default function CareerRoadmap() {
   const location = useLocation();
   const stateResult = (location.state as { result?: AnalysisResult } | null)?.result;
-  const steps = stateResult?.careerRoadmap ?? [];
+  const [steps, setSteps] = useState<string[]>(stateResult?.careerRoadmap ?? []);
+  const [isLoading, setIsLoading] = useState(!stateResult);
+
+  useEffect(() => {
+    if (stateResult) return;
+    setIsLoading(true);
+    getHistoryRequest()
+      .then(async (history) => {
+        const latest = history?.[0];
+        if (latest) {
+          try {
+            const data = await getAnalysisDetailRequest(latest.id);
+            setSteps(data.career_roadmap ?? []);
+          } catch (err) {
+            console.error("Failed to load latest analysis details:", err);
+          }
+        }
+      })
+      .finally(() => setIsLoading(false));
+  }, [stateResult]);
+
+  if (isLoading) return <Loader label="Loading career roadmap" />;
 
   return (
     <div>
