@@ -7,7 +7,7 @@ export const getDashboardSummary = asyncHandler(async (req: Request, res: Respon
 
   const { data: analyses, error } = await supabaseAdmin
     .from("resume_analysis")
-    .select("id, resume_score, ats_score, created_at, recommended_roles(role, match_percentage)")
+    .select("id, resume_score, ats_score, created_at, recommended_roles(role, match_percentage, confidence)")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(10);

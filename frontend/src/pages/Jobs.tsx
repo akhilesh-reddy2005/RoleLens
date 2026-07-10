@@ -3,7 +3,15 @@ import { Briefcase, Loader2, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink } from "@/components/ui/pagination";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { JobCard } from "@/components/cards/JobCard";
 import { JobFilters } from "@/components/shared/JobFilters";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -22,6 +30,38 @@ function JobGridSkeleton() {
       ))}
     </div>
   );
+}
+
+function getPageNumbers(currentPage: number, totalPages: number) {
+  const pages: (number | 'ellipsis')[] = [];
+  const maxVisiblePages = 5;
+
+  if (totalPages <= maxVisiblePages) {
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    if (start > 2) {
+      pages.push('ellipsis');
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    if (end < totalPages - 1) {
+      pages.push('ellipsis');
+    }
+
+    pages.push(totalPages);
+  }
+
+  return pages;
 }
 
 export default function Jobs() {
@@ -111,20 +151,48 @@ export default function Jobs() {
               {totalPages > 1 && (
                 <Pagination>
                   <PaginationContent>
-                    {Array.from({ length: totalPages }).map((_, idx) => (
-                      <PaginationItem key={idx}>
-                        <PaginationLink
-                          isActive={filters.page === idx + 1 || (!filters.page && idx === 0)}
+                    {filters.page && filters.page > 1 && (
+                      <PaginationItem>
+                        <PaginationPrevious
                           href="#"
                           onClick={(e) => {
                             e.preventDefault();
-                            setFilters((f) => ({ ...f, page: idx + 1 }));
+                            setFilters((f) => ({ ...f, page: (filters.page || 1) - 1 }));
                           }}
-                        >
-                          {idx + 1}
-                        </PaginationLink>
+                        />
+                      </PaginationItem>
+                    )}
+
+                    {getPageNumbers(filters.page || 1, totalPages).map((p, idx) => (
+                      <PaginationItem key={idx}>
+                        {p === 'ellipsis' ? (
+                          <PaginationEllipsis />
+                        ) : (
+                          <PaginationLink
+                            isActive={filters.page === p || (!filters.page && p === 1)}
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setFilters((f) => ({ ...f, page: p }));
+                            }}
+                          >
+                            {p}
+                          </PaginationLink>
+                        )}
                       </PaginationItem>
                     ))}
+
+                    {filters.page && filters.page < totalPages && (
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setFilters((f) => ({ ...f, page: (filters.page || 1) + 1 }));
+                          }}
+                        />
+                      </PaginationItem>
+                    )}
                   </PaginationContent>
                 </Pagination>
               )}

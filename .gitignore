@@ -1,3 +1,8 @@
 .DS_Store
 .claude/
 *.tsbuildinfo
+.env
+.env.*
+_env_*
+node_modules/
+dist/
